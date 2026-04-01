@@ -3,52 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vagon Nazorat - Oson Tizim</title>
+    <title>Vagon Nazorat - Professional Tizim</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --p: #2563eb; --bg: #f8fafc; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 10px; margin: 0; }
-        .container { max-width: 400px; background: white; padding: 25px; border-radius: 12px; margin: 20px auto; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: var(--p); }
-        input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; }
+        :root { 
+            --primary: #2563eb; 
+            --bg: #f1f5f9; 
+            --text: #1e293b;
+            --card-bg: #ffffff;
+        }
+        body { 
+            font-family: 'Segoe UI', system-ui, sans-serif; 
+            background: var(--bg); 
+            color: var(--text);
+            padding: 15px; 
+            margin: 0; 
+        }
+        .container { 
+            max-width: 450px; 
+            background: var(--card-bg); 
+            padding: 30px; 
+            border-radius: 16px; 
+            margin: 30px auto; 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+        h2 { text-align: center; color: var(--primary); margin-top: 0; font-size: 24px; }
+        label { font-size: 14px; font-weight: 600; color: #64748b; margin-bottom: 4px; display: block; }
+        input, select, textarea, button { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 8px 0 16px 0; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 10px; 
+            box-sizing: border-box; 
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+        button { 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            font-weight: bold; 
+            cursor: pointer; 
+            padding: 14px;
+            font-size: 16px;
+        }
+        button:hover { background: #1d4ed8; transform: translateY(-1px); }
+        .link { text-align: center; font-size: 14px; color: var(--primary); cursor: pointer; display: block; margin-top: 5px; font-weight: 600; }
         .hidden { display: none; }
-        .record-card { background: #fff; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; border-left: 5px solid var(--p); border-radius: 4px; }
+        .record-card { 
+            background: #f8fafc; 
+            border: 1px solid #e2e8f0; 
+            padding: 15px; 
+            margin-bottom: 12px; 
+            border-left: 5px solid var(--primary); 
+            border-radius: 8px; 
+        }
+        .user-info {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .logout-btn { background: #ef4444; width: auto; padding: 8px 12px; font-size: 12px; margin: 0; border-radius: 6px; }
+        .logout-btn:hover { background: #dc2626; }
     </style>
 </head>
 <body>
 
-<div class="container" id="login-box">
-    <h2>Tizimga kirish</h2>
-    <input type="text" id="user-fio" placeholder="To'liq Ism-sharifingiz (F.I.O)">
-    <select id="user-role">
+<div class="container" id="reg-box">
+    <h2>Yangi Profil Yaratish</h2>
+    <label>F.I.O:</label>
+    <input type="text" id="reg-fio" placeholder="Ism va familiyangiz">
+    
+    <label>Login (Kirish uchun):</label>
+    <input type="text" id="reg-login" placeholder="Masalan: abdulloh123">
+    
+    <label>Parol:</label>
+    <input type="password" id="reg-pass" placeholder="Parol yarating">
+    
+    <label>Rolingiz:</label>
+    <select id="reg-role">
         <option value="Ishchi">Ishchi</option>
         <option value="Admin">Glavniy Admin</option>
     </select>
-    <button onclick="enterApp()">Kirish</button>
+    <button onclick="signUp()">Ro'yxatdan o'tish</button>
+    <span class="link" onclick="toggleAuth()">Akkountingiz bormi? Kirish</span>
+</div>
+
+<div class="container hidden" id="login-box">
+    <h2>Tizimga Kirish</h2>
+    <label>Login:</label>
+    <input type="text" id="login-user" placeholder="Loginingizni yozing">
+    
+    <label>Parol:</label>
+    <input type="password" id="login-pass" placeholder="Parolingizni yozing">
+    
+    <button onclick="signIn()">Kirish</button>
+    <span class="link" onclick="toggleAuth()">Yangi profil yaratish</span>
 </div>
 
 <div class="container hidden" id="main-app">
-    <div id="user-header" style="font-size: 14px; font-weight: bold; margin-bottom: 15px;"></div>
+    <div class="user-info">
+        <span id="user-header"></span>
+        <button class="logout-btn" onclick="logout()">Chiqish</button>
+    </div>
     
+    <h2>Vagon Nosozlik Kiritish</h2>
     <label>Vagon raqami:</label>
     <input type="text" id="vagon-num" placeholder="Masalan: 1234...">
     
+    <label>Nosozlik tavsifi:</label>
     <textarea id="issue-desc" placeholder="Nosozlikni batafsil yozing..." rows="4"></textarea>
+    
     <button onclick="submitReport()">Hisobotni yuborish</button>
-    <button onclick="logout()" style="background: #64748b; margin-top: 10px;">Chiqish</button>
 
     <div id="admin-section" class="hidden">
-        <hr>
-        <h3>Barcha Nosozliklar (Admin uchun)</h3>
+        <hr style="border: 0; height: 1px; background: #e2e8f0; margin: 20px 0;">
+        <h3>📋 Barcha Nosozliklar</h3>
         <div id="reports-list"></div>
     </div>
 </div>
 
 <script>
-// Firebase konfiguratsiyasi
 const firebaseConfig = {
   apiKey: "AIzaSyCqPqAB4xfRzM2WhB5VUHM_elKIx_j7Qk8",
   authDomain: "vagon-nazorat.firebaseapp.com",
@@ -57,31 +147,65 @@ const firebaseConfig = {
   messagingSenderId: "165935526785",
   appId: "1:165935526785:web:d81c40e438ac6f5a5aee80",
   measurementId: "G-CX751XWKVB",
-  databaseURL: "https://vagon-nazorat-default-rtdb.firebaseio.com/" // Siz topgan manzil!
+  databaseURL: "https://vagon-nazorat-default-rtdb.firebaseio.com"
 };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Tizimga kirish funksiyasi
-    function enterApp() {
-        const fio = document.getElementById('user-fio').value;
-        const role = document.getElementById('user-role').value;
-
-        if(!fio) return alert("Iltimos, ismingizni yozing!");
-
-        // Brauzer xotirasiga saqlab qo'yamiz (har safar so'ramasligi uchun)
-        localStorage.setItem('vagon_user', fio);
-        localStorage.setItem('vagon_role', role);
-
-        showMain(fio, role);
+    function toggleAuth() {
+        document.getElementById('reg-box').classList.toggle('hidden');
+        document.getElementById('login-box').classList.toggle('hidden');
     }
 
-    // Sahifani ko'rsatish
+    // 1. RO'YXATDAN O'TISH (Login va Parol bilan)
+    function signUp() {
+        const fio = document.getElementById('reg-fio').value.trim();
+        const login = document.getElementById('reg-login').value.trim().toLowerCase();
+        const pass = document.getElementById('reg-pass').value.trim();
+        const role = document.getElementById('reg-role').value;
+
+        if(!fio || !login || !pass) return alert("Barcha maydonlarni to'ldiring!");
+
+        // Avval bu login band emasligini tekshiramiz
+        db.ref('users/' + login).once('value', s => {
+            if(s.exists()) {
+                alert("Bu login band! Boshqa login tanlang.");
+            } else {
+                // Yangi foydalanuvchini bazaga qo'shamiz
+                db.ref('users/' + login).set({ fio, pass, role }).then(() => {
+                    alert("Muvaffaqiyatli ro'yxatdan o'tdingiz! Endi tizimga kiring.");
+                    toggleAuth();
+                });
+            }
+        });
+    }
+
+    // 2. KIRISH (Login va Parol orqali)
+    function signIn() {
+        const login = document.getElementById('login-user').value.trim().toLowerCase();
+        const pass = document.getElementById('login-pass').value.trim();
+
+        if(!login || !pass) return alert("Login va parolni yozing!");
+
+        db.ref('users/' + login).once('value', s => {
+            const userData = s.val();
+            if(userData && userData.pass === pass) {
+                // Ma'lumotlar to'g'ri bo'lsa brauzerda saqlaymiz
+                localStorage.setItem('vagon_login', login);
+                showMain(userData.fio, userData.role);
+            } else {
+                alert("Login yoki parol noto'g'ri!");
+            }
+        });
+    }
+
+    // 3. SAHIFANI KO'RSATISH
     function showMain(fio, role) {
+        document.getElementById('reg-box').classList.add('hidden');
         document.getElementById('login-box').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
-        document.getElementById('user-header').innerText = `👤 Foydalanuvchi: ${fio} (${role})`;
+        document.getElementById('user-header').innerText = `👤 ${fio} (${role})`;
 
         if(role === 'Admin') {
             document.getElementById('admin-section').classList.remove('hidden');
@@ -89,35 +213,40 @@ const firebaseConfig = {
         }
     }
 
-    // Avtomatik kirishni tekshirish
-    const savedFio = localStorage.getItem('vagon_user');
-    const savedRole = localStorage.getItem('vagon_role');
-    if(savedFio && savedRole) {
-        showMain(savedFio, savedRole);
-    }
-
-    // NOSOZLIKNI YUBORISH
-    function submitReport() {
-        const fio = localStorage.getItem('vagon_user');
-        const vagon = document.getElementById('vagon-num').value;
-        const desc = document.getElementById('issue-desc').value;
-        const time = new Date().toLocaleString('uz-UZ');
-
-        if(!vagon || !desc) return alert("Ma'lumotni to'ldiring!");
-
-        db.ref('reports').push({
-            fio: fio,
-            vagon: vagon,
-            issue: desc,
-            date: time
-        }).then(() => {
-            alert("Nosozlik saqlandi!");
-            document.getElementById('vagon-num').value = "";
-            document.getElementById('issue-desc').value = "";
+    // Brauzer yopilib ochilganda avtomatik kirish
+    const savedLogin = localStorage.getItem('vagon_login');
+    if(savedLogin) {
+        db.ref('users/' + savedLogin).once('value', s => {
+            const u = s.val();
+            if(u) showMain(u.fio, u.role);
         });
     }
 
-    // ADMIN UCHUN BARCHA MA'LUMOTLARNI YUKLASH
+    // 4. NOSOZLIKNI YUBORISH
+    function submitReport() {
+        const login = localStorage.getItem('vagon_login');
+        db.ref('users/' + login).once('value', s => {
+            const userData = s.val();
+            const vagon = document.getElementById('vagon-num').value.trim();
+            const desc = document.getElementById('issue-desc').value.trim();
+            const time = new Date().toLocaleString('uz-UZ');
+
+            if(!vagon || !desc) return alert("Ma'lumotni to'ldiring!");
+
+            db.ref('reports').push({
+                fio: userData.fio,
+                vagon: vagon,
+                issue: desc,
+                date: time
+            }).then(() => {
+                alert("Nosozlik saqlandi!");
+                document.getElementById('vagon-num').value = "";
+                document.getElementById('issue-desc').value = "";
+            });
+        });
+    }
+
+    // 5. ADMIN UCHUN BARCHA MA'LUMOTLARNI YUKLASH
     function loadAllReports() {
         db.ref('reports').on('value', s => {
             const list = document.getElementById('reports-list');
@@ -127,17 +256,16 @@ const firebaseConfig = {
                 Object.values(data).reverse().forEach(r => {
                     list.innerHTML += `
                         <div class="record-card">
-                            <small>${r.date}</small><br>
-                            <b>Vagon: ${r.vagon}</b><br>
-                            <span>Aniqladi: ${r.fio}</span><br>
-                            <p>⚠️ ${r.issue}</p>
+                            <small style="color: #64748b;">📅 ${r.date}</small><br>
+                            <b style="color: var(--primary);">Vagon: ${r.vagon}</b><br>
+                            <span style="font-size: 14px;">👤 Aniqladi: ${r.fio}</span><br>
+                            <p style="margin: 8px 0 0 0; font-size: 15px;">⚠️ ${r.issue}</p>
                         </div>`;
                 });
             }
         });
     }
 
-    // Chiqish
     function logout() {
         localStorage.clear();
         location.reload();
