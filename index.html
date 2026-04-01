@@ -3,66 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vagon Nazorat - Admin Tizimi</title>
+    <title>Vagon Nazorat - Professional Tizim</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
-        :root { --primary: #2563eb; --bg: #f1f5f9; --text: #1e293b; --card-bg: #ffffff; }
+        :root { --primary: #2563eb; --bg: #f1f5f9; --text: #1e293b; --success: #22c55e; --warning: #f59e0b; --danger: #ef4444; }
         body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); padding: 15px; margin: 0; }
-        .container { max-width: 450px; background: var(--card-bg); padding: 30px; border-radius: 16px; margin: 30px auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
-        h2 { text-align: center; color: var(--primary); margin-top: 0; font-size: 24px; }
-        label { font-size: 14px; font-weight: 600; color: #64748b; margin-bottom: 4px; display: block; }
-        input, textarea, button { width: 100%; padding: 12px; margin: 8px 0 16px 0; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 15px; }
-        input:focus, textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
-        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; padding: 14px; font-size: 16px; }
-        button:hover { background: #1d4ed8; }
-        .link { text-align: center; font-size: 14px; color: var(--primary); cursor: pointer; display: block; margin-top: 5px; font-weight: 600; }
+        .container { max-width: 500px; background: white; padding: 25px; border-radius: 16px; margin: 20px auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h2, h3 { text-align: center; color: var(--primary); }
+        input, textarea, button, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 15px; }
+        button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
+        
+        /* Avto-to'ldirish ro'yxati */
+        .suggestion-box { position: absolute; background: white; border: 1px solid #ddd; width: 100%; z-index: 100; max-height: 150px; overflow-y: auto; border-radius: 8px; display: none; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .suggestion-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
+        .suggestion-item:hover { background: #f0f7ff; }
+
         .hidden { display: none; }
-        .record-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; margin-bottom: 12px; border-left: 5px solid var(--primary); border-radius: 8px; }
-        .user-info { background: #e0f2fe; color: #0369a1; padding: 10px 15px; border-radius: 10px; font-size: 14px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .logout-btn { background: #ef4444; width: auto; padding: 8px 12px; font-size: 12px; margin: 0; border-radius: 6px; }
+        .record-card { background: #fff; border: 1px solid #e2e8f0; padding: 15px; margin-bottom: 12px; border-radius: 10px; position: relative; }
+        .status-badge { font-size: 11px; padding: 4px 8px; border-radius: 20px; font-weight: bold; text-transform: uppercase; float: right; }
+        .status-wait { background: #fef3c7; color: #92400e; }
+        .status-done { background: #dcfce7; color: #166534; }
+        
+        .user-info { background: #e0f2fe; padding: 10px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; font-weight: bold; }
+        .admin-controls { display: flex; gap: 5px; margin-top: 10px; }
+        .admin-controls button { padding: 5px; font-size: 12px; }
     </style>
 </head>
 <body>
 
-<div class="container" id="reg-box">
-    <h2>Yangi Profil Yaratish</h2>
-    <label>F.I.O:</label>
-    <input type="text" id="reg-fio" placeholder="Ism va familiyangiz">
+<div class="container" id="auth-box">
+    <h2 id="auth-title">Tizimga Kirish</h2>
+    <div id="reg-fields" class="hidden">
+        <label>F.I.O:</label>
+        <input type="text" id="reg-fio" placeholder="Ism familiya">
+    </div>
     <label>Login:</label>
-    <input type="text" id="reg-login" placeholder="Masalan: abdulloh123">
+    <input type="text" id="user-login" placeholder="Login">
     <label>Parol:</label>
-    <input type="password" id="reg-pass" placeholder="Parol yarating">
-    <button onclick="signUp()">Ro'yxatdan o'tish</button>
-    <span class="link" onclick="toggleAuth()">Akkountingiz bormi? Kirish</span>
-</div>
-
-<div class="container hidden" id="login-box">
-    <h2>Tizimga Kirish</h2>
-    <label>Login:</label>
-    <input type="text" id="login-user" placeholder="Loginingizni yozing">
-    <label>Parol:</label>
-    <input type="password" id="login-pass" placeholder="Parolingizni yozing">
-    <button onclick="signIn()">Kirish</button>
-    <span class="link" onclick="toggleAuth()">Yangi profil yaratish</span>
+    <input type="password" id="user-pass" placeholder="Parol">
+    <button id="auth-btn" onclick="signIn()">Kirish</button>
+    <span class="link" id="toggle-link" onclick="toggleAuth()" style="text-align:center; display:block; cursor:pointer; color:var(--primary); margin-top:10px;">Yangi profil yaratish</span>
 </div>
 
 <div class="container hidden" id="main-app">
     <div class="user-info">
         <span id="user-header"></span>
-        <button class="logout-btn" onclick="logout()">Chiqish</button>
+        <button onclick="logout()" style="width:auto; margin:0; background:var(--danger); padding:5px 10px;">Chiqish</button>
     </div>
-    <h2>Vagon Nosozlik Kiritish</h2>
-    <label>Vagon raqami:</label>
-    <input type="text" id="vagon-num" placeholder="Masalan: 1234...">
-    <label>Nosozlik tavsifi:</label>
-    <textarea id="issue-desc" placeholder="Nosozlikni batafsil yozing..." rows="4"></textarea>
-    <button onclick="submitReport()">Hisobotni yuborish</button>
+
+    <div id="worker-section">
+        <label>Vagon raqami:</label>
+        <div style="position:relative;">
+            <input type="text" id="vagon-num" placeholder="Masalan: 1234..." onkeyup="handleVagonInput(this.value)">
+            <div id="suggestions" class="suggestion-box"></div>
+        </div>
+        <div id="history-alert" style="color:var(--danger); font-size:12px; font-weight:bold; margin-bottom:10px; display:none;"></div>
+
+        <label>Nosozlik tavsifi:</label>
+        <textarea id="issue-desc" placeholder="Nosozlikni yozing..." rows="3"></textarea>
+        <button onclick="submitReport()">Yuborish</button>
+    </div>
 
     <div id="admin-section" class="hidden">
-        <hr style="border: 0; height: 1px; background: #e2e8f0; margin: 20px 0;">
-        <h3>📋 Barcha Nosozliklar</h3>
+        <hr>
+        <h3>📊 Admin Paneli</h3>
+        <input type="text" id="search-report" placeholder="Vagon yoki xodim bo'yicha qidirish..." onkeyup="filterReports(this.value)">
+        <button onclick="exportToExcel()" style="background:#166534;">Excelga yuklab olish (.xlsx)</button>
         <div id="reports-list"></div>
     </div>
 </div>
@@ -79,100 +89,148 @@ const firebaseConfig = {
   databaseURL: "https://vagon-nazorat-default-rtdb.firebaseio.com"
 };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-    function toggleAuth() {
-        document.getElementById('reg-box').classList.toggle('hidden');
-        document.getElementById('login-box').classList.toggle('hidden');
-    }
+let isLoginMode = true;
+// Namuna uchun vagonlar ro'yxati (Avto-to'ldirish uchun)
+const vagonlarDB = ["1234567", "2233445", "7778889", "5554443", "9990001", "1002003"];
 
-    function signUp() {
-        const fio = document.getElementById('reg-fio').value.trim();
-        const login = document.getElementById('reg-login').value.trim().toLowerCase();
-        const pass = document.getElementById('reg-pass').value.trim();
-        if(!fio || !login || !pass) return alert("Barcha maydonlarni to'ldiring!");
+function toggleAuth() {
+    isLoginMode = !isLoginMode;
+    document.getElementById('auth-title').innerText = isLoginMode ? "Tizimga Kirish" : "Ro'yxatdan o'tish";
+    document.getElementById('reg-fields').classList.toggle('hidden');
+    document.getElementById('auth-btn').innerText = isLoginMode ? "Kirish" : "Ro'yxatdan o'tish";
+    document.getElementById('toggle-link').innerText = isLoginMode ? "Yangi profil yaratish" : "Akkountingiz bormi? Kirish";
+}
 
-        db.ref('users/' + login).once('value', s => {
-            if(s.exists()) { alert("Bu login band!"); } 
-            else {
-                // Yangi kiritilgan hamma sukut bo'yicha "Ishchi" bo'ladi!
-                db.ref('users/' + login).set({ fio, pass, role: 'Ishchi' }).then(() => {
-                    alert("Muvaffaqiyatli ro'yxatdan o'tdingiz! Kirishingiz mumkin.");
-                    toggleAuth();
-                });
-            }
-        });
-    }
+function signUp() {
+    const fio = document.getElementById('reg-fio').value.trim();
+    const login = document.getElementById('user-login').value.trim().toLowerCase();
+    const pass = document.getElementById('user-pass').value.trim();
+    if(!fio || !login || !pass) return alert("To'ldiring!");
 
-    function signIn() {
-        const login = document.getElementById('login-user').value.trim().toLowerCase();
-        const pass = document.getElementById('login-pass').value.trim();
-        if(!login || !pass) return alert("Login va parolni yozing!");
+    db.ref('users/' + login).set({ fio, pass, role: 'Ishchi' }).then(() => {
+        alert("Tayyor! Endi kiring.");
+        toggleAuth();
+    });
+}
 
-        db.ref('users/' + login).once('value', s => {
-            const userData = s.val();
-            if(userData && userData.pass === pass) {
-                localStorage.setItem('vagon_login', login);
-                showMain(userData.fio, userData.role);
-            } else { alert("Login yoki parol noto'g'ri!"); }
-        });
-    }
+function signIn() {
+    if(!isLoginMode) return signUp();
+    const login = document.getElementById('user-login').value.trim().toLowerCase();
+    const pass = document.getElementById('user-pass').value.trim();
 
-    function showMain(fio, role) {
-        document.getElementById('reg-box').classList.add('hidden');
-        document.getElementById('login-box').classList.add('hidden');
+    db.ref('users/' + login).once('value', s => {
+        const u = s.val();
+        if(u && u.pass === pass) {
+            localStorage.setItem('vagon_user', JSON.stringify({login, ...u}));
+            location.reload();
+        } else alert("Xato!");
+    });
+}
+
+function handleVagonInput(val) {
+    const sBox = document.getElementById('suggestions');
+    const hAlert = document.getElementById('history-alert');
+    sBox.innerHTML = "";
+    hAlert.style.display = "none";
+
+    if(val.length > 0) {
+        let matches = vagonlarDB.filter(v => v.includes(val));
+        if(matches.length > 0) {
+            sBox.style.display = "block";
+            matches.forEach(m => {
+                let d = document.createElement('div');
+                d.className = 'suggestion-item';
+                d.innerText = m;
+                d.onclick = () => { document.getElementById('vagon-num').value = m; sBox.style.display="none"; checkHistory(m); };
+                sBox.appendChild(d);
+            });
+        }
+    } else sBox.style.display = "none";
+}
+
+function checkHistory(num) {
+    db.ref('reports').orderByChild('vagon').equalTo(num).limitToLast(1).once('value', s => {
+        if(s.exists()) {
+            let last = Object.values(s.val())[0];
+            document.getElementById('history-alert').style.display = "block";
+            document.getElementById('history-alert').innerText = `⚠️ Ogohlantirish: Bu vagon ${last.date}da yozilgan!`;
+        }
+    });
+}
+
+function submitReport() {
+    const user = JSON.parse(localStorage.getItem('vagon_user'));
+    const vagon = document.getElementById('vagon-num').value.trim();
+    const issue = document.getElementById('issue-desc').value.trim();
+    if(!vagon || !issue) return alert("To'ldiring!");
+
+    db.ref('reports').push({
+        fio: user.fio, vagon, issue, date: new Date().toLocaleString('uz-UZ'), status: 'wait'
+    }).then(() => { alert("Yuborildi!"); location.reload(); });
+}
+
+function loadAllReports() {
+    db.ref('reports').on('value', s => {
+        const list = document.getElementById('reports-list');
+        list.innerHTML = "";
+        allReportsData = s.val(); // Eksport uchun saqlaymiz
+        if(allReportsData) {
+            Object.keys(allReportsData).reverse().forEach(key => {
+                let r = allReportsData[key];
+                list.innerHTML += `
+                    <div class="record-card" data-search="${r.vagon} ${r.fio}">
+                        <span class="status-badge ${r.status === 'done' ? 'status-done' : 'status-wait'}">
+                            ${r.status === 'done' ? 'TUZATILDI' : 'KUTILMOQDA'}
+                        </span>
+                        <b>Vagon: ${r.vagon}</b><br>
+                        <small>${r.date} | ${r.fio}</small><br>
+                        <p>${r.issue}</p>
+                        <div class="admin-controls">
+                            <button onclick="updateStatus('${key}', 'done')" style="background:var(--success)">Tuzatildi</button>
+                            <button onclick="updateStatus('${key}', 'wait')" style="background:var(--warning)">Kutilmoqda</button>
+                            <button onclick="deleteReport('${key}')" style="background:var(--danger)">O'chirish</button>
+                        </div>
+                    </div>`;
+            });
+        }
+    });
+}
+
+function updateStatus(id, stat) { db.ref('reports/' + id).update({ status: stat }); }
+function deleteReport(id) { if(confirm("O'chirilsinmi?")) db.ref('reports/' + id).remove(); }
+
+function filterReports(val) {
+    let cards = document.querySelectorAll('.record-card');
+    cards.forEach(c => {
+        c.style.display = c.getAttribute('data-search').toLowerCase().includes(val.toLowerCase()) ? "block" : "none";
+    });
+}
+
+function exportToExcel() {
+    let data = Object.values(allReportsData).map(r => ({ "Sana": r.date, "Xodim": r.fio, "Vagon": r.vagon, "Muammo": r.issue, "Holat": r.status }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Hisobot");
+    XLSX.writeFile(wb, "Vagon_Nosozlik_Hisoboti.xlsx");
+}
+
+function logout() { localStorage.clear(); location.reload(); }
+
+window.onload = () => {
+    const user = JSON.parse(localStorage.getItem('vagon_user'));
+    if(user) {
+        document.getElementById('auth-box').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
-        document.getElementById('user-header').innerText = `👤 ${fio} (${role})`;
-        if(role === 'Admin') {
+        document.getElementById('user-header').innerText = `👤 ${user.fio}`;
+        if(user.role === 'Admin') {
             document.getElementById('admin-section').classList.remove('hidden');
             loadAllReports();
         }
     }
-
-    const savedLogin = localStorage.getItem('vagon_login');
-    if(savedLogin) {
-        db.ref('users/' + savedLogin).once('value', s => {
-            const u = s.val();
-            if(u) showMain(u.fio, u.role);
-        });
-    }
-
-    function submitReport() {
-        const login = localStorage.getItem('vagon_login');
-        const vagon = document.getElementById('vagon-num').value.trim();
-        const desc = document.getElementById('issue-desc').value.trim();
-        const time = new Date().toLocaleString('uz-UZ');
-        if(!vagon || !desc) return alert("Ma'lumotni to'ldiring!");
-
-        db.ref('users/' + login).once('value', s => {
-            db.ref('reports').push({ fio: s.val().fio, vagon, issue: desc, date: time }).then(() => {
-                alert("Nosozlik saqlandi!");
-                document.getElementById('vagon-num').value = "";
-                document.getElementById('issue-desc').value = "";
-            });
-        });
-    }
-
-    function loadAllReports() {
-        db.ref('reports').on('value', s => {
-            const list = document.getElementById('reports-list');
-            list.innerHTML = "";
-            const data = s.val();
-            if(data) {
-                Object.values(data).reverse().forEach(r => {
-                    list.innerHTML += `
-                        <div class="record-card">
-                            <small style="color: #64748b;">📅 ${r.date}</small><br>
-                            <b style="color: var(--primary);">Vagon: ${r.vagon}</b><br>
-                            <span style="font-size: 14px;">👤 Aniqladi: ${r.fio}</span><br>
-                            <p style="margin: 8px 0 0 0; font-size: 15px;">⚠️ ${r.issue}</p>
-                        </div>`;
-                });
-            }
-        });
-    }
-    function logout() { localStorage.clear(); location.reload(); }
+};
 </script>
 </body>
 </html>
