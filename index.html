@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vagon Nazorat - Professional Tizim</title>
+    <title>Vagon Nazorat - Oson Tizim</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
     <style>
@@ -15,39 +14,27 @@
         h2 { text-align: center; color: var(--p); }
         input, select, textarea, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         button { background: var(--p); color: white; border: none; font-weight: bold; cursor: pointer; }
-        .link { text-align: center; font-size: 14px; color: var(--p); cursor: pointer; display: block; margin-top: 10px; }
         .hidden { display: none; }
         .record-card { background: #fff; border: 1px solid #eee; padding: 10px; margin-bottom: 10px; border-left: 5px solid var(--p); border-radius: 4px; }
     </style>
 </head>
 <body>
 
-<div class="container" id="reg-box">
-    <h2>Ro'yxatdan o'tish</h2>
-    <input type="text" id="reg-fio" placeholder="To'liq Ism-sharif (F.I.O)">
-    <input type="email" id="reg-email" placeholder="Email (masalan: Olimjon@mail.ru)">
-    <input type="password" id="reg-pass" placeholder="Parol yarating">
-    <select id="reg-role">
+<div class="container" id="login-box">
+    <h2>Tizimga kirish</h2>
+    <input type="text" id="user-fio" placeholder="To'liq Ism-sharifingiz (F.I.O)">
+    <select id="user-role">
         <option value="Ishchi">Ishchi</option>
         <option value="Admin">Glavniy Admin</option>
     </select>
-    <button onclick="signUp()">Ro'yxatdan o'tish</button>
-    <span class="link" onclick="toggleAuth()">Akkountingiz bormi? Kirish</span>
-</div>
-
-<div class="container hidden" id="login-box">
-    <h2>Tizimga kirish</h2>
-    <input type="email" id="login-email" placeholder="Email">
-    <input type="password" id="login-pass" placeholder="Parol">
-    <button onclick="signIn()">Kirish</button>
-    <span class="link" onclick="toggleAuth()">Yangi akkount ochish</span>
+    <button onclick="enterApp()">Kirish</button>
 </div>
 
 <div class="container hidden" id="main-app">
     <div id="user-header" style="font-size: 14px; font-weight: bold; margin-bottom: 15px;"></div>
     
-    <label>Vagon raqami (Qidiruv):</label>
-    <input type="text" id="vagon-num" placeholder="Masalan: 1234..." onkeyup="checkHistory(this.value)">
+    <label>Vagon raqami:</label>
+    <input type="text" id="vagon-num" placeholder="Masalan: 1234...">
     
     <textarea id="issue-desc" placeholder="Nosozlikni batafsil yozing..." rows="4"></textarea>
     <button onclick="submitReport()">Hisobotni yuborish</button>
@@ -55,103 +42,78 @@
 
     <div id="admin-section" class="hidden">
         <hr>
-        <h3>Barcha Nosozliklar</h3>
+        <h3>Barcha Nosozliklar (Admin uchun)</h3>
         <div id="reports-list"></div>
     </div>
 </div>
 
 <script>
+// Firebase konfiguratsiyasi
 const firebaseConfig = {
   apiKey: "AIzaSyCqPqAB4xfRzM2WhB5VUHM_elKIx_j7Qk8",
   authDomain: "vagon-nazorat.firebaseapp.com",
-  databaseURL: "https://vagon-nazorat-default-rtdb.firebaseio.com", // BU QATORNI QO'SHTIM
   projectId: "vagon-nazorat",
   storageBucket: "vagon-nazorat.firebasestorage.app",
   messagingSenderId: "165935526785",
   appId: "1:165935526785:web:d81c40e438ac6f5a5aee80",
-  measurementId: "G-CX751XWKVB"
+  measurementId: "G-CX751XWKVB",
+  databaseURL: "https://vagon-nazorat-default-rtdb.firebaseio.com" // Siz topgan manzil!
 };
 
-
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
     const db = firebase.database();
 
-    // Oynalar orasida almashish
-    function toggleAuth() {
-        document.getElementById('reg-box').classList.toggle('hidden');
-        document.getElementById('login-box').classList.toggle('hidden');
-    }
-  // RO'YXATDAN O'TISH
-    function signUp() {
-        const fio = document.getElementById('reg-fio').value;
-        const email = document.getElementById('reg-email').value;
-        const pass = document.getElementById('reg-pass').value;
-        const role = document.getElementById('reg-role').value;
+    // Tizimga kirish funksiyasi
+    function enterApp() {
+        const fio = document.getElementById('user-fio').value;
+        const role = document.getElementById('user-role').value;
 
-        if(!fio  !email  !pass) return alert("Hamma maydonni to'ldiring!");
+        if(!fio) return alert("Iltimos, ismingizni yozing!");
 
-        auth.createUserWithEmailAndPassword(email, pass).then(res => {
-            // Foydalanuvchi ma'lumotlarini bazaga saqlaymiz
-            db.ref('users/' + res.user.uid).set({ fio, role, email });
-            alert("Muvaffaqiyatli ro'yxatdan o'tdingiz!");
-        }).catch(err => alert(err.message));
+        // Brauzer xotirasiga saqlab qo'yamiz (har safar so'ramasligi uchun)
+        localStorage.setItem('vagon_user', fio);
+        localStorage.setItem('vagon_role', role);
+
+        showMain(fio, role);
     }
 
-    // KIRISH
-    function signIn() {
-        const email = document.getElementById('login-email').value;
-        const pass = document.getElementById('login-pass').value;
-
-        auth.signInWithEmailAndPassword(email, pass).catch(err => alert(err.message));
-    }
-
-    // TIZIM HOLATINI TEKSHIRISH
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            db.ref('users/' + user.uid).once('value', s => {
-                const userData = s.val();
-                showMain(userData);
-            });
-        } else {
-            document.getElementById('main-app').classList.add('hidden');
-            document.getElementById('login-box').classList.remove('hidden');
-        }
-    });
-
-    function showMain(user) {
-        document.getElementById('reg-box').classList.add('hidden');
+    // Sahifani ko'rsatish
+    function showMain(fio, role) {
         document.getElementById('login-box').classList.add('hidden');
         document.getElementById('main-app').classList.remove('hidden');
-        document.getElementById('user-header').innerText = 👤 Foydalanuvchi: ${user.fio} (${user.role});
+        document.getElementById('user-header').innerText = `👤 Foydalanuvchi: ${fio} (${role})`;
 
-        if(user.role === 'Admin') {
+        if(role === 'Admin') {
             document.getElementById('admin-section').classList.remove('hidden');
             loadAllReports();
         }
     }
 
+    // Avtomatik kirishni tekshirish
+    const savedFio = localStorage.getItem('vagon_user');
+    const savedRole = localStorage.getItem('vagon_role');
+    if(savedFio && savedRole) {
+        showMain(savedFio, savedRole);
+    }
+
     // NOSOZLIKNI YUBORISH
     function submitReport() {
-        const userUid = auth.currentUser.uid;
-        db.ref('users/' + userUid).once('value', s => {
-            const userData = s.val();
-            const vagon = document.getElementById('vagon-num').value;
-            const desc = document.getElementById('issue-desc').value;
-            const time = new Date().toLocaleString('uz-UZ');
+        const fio = localStorage.getItem('vagon_user');
+        const vagon = document.getElementById('vagon-num').value;
+        const desc = document.getElementById('issue-desc').value;
+        const time = new Date().toLocaleString('uz-UZ');
 
-            if(!vagon || !desc) return alert("Ma'lumotni to'ldiring!");
+        if(!vagon || !desc) return alert("Ma'lumotni to'ldiring!");
 
-            db.ref('reports').push({
-                fio: userData.fio,
-                vagon: vagon,
-                issue: desc,
-                date: time
-            }).then(() => {
-                alert("Nosozlik saqlandi!");
-                document.getElementById('vagon-num').value = "";
-                document.getElementById('issue-desc').value = "";
-            });
+        db.ref('reports').push({
+            fio: fio,
+            vagon: vagon,
+            issue: desc,
+            date: time
+        }).then(() => {
+            alert("Nosozlik saqlandi!");
+            document.getElementById('vagon-num').value = "";
+            document.getElementById('issue-desc').value = "";
         });
     }
 
@@ -163,20 +125,23 @@ const firebaseConfig = {
             const data = s.val();
             if(data) {
                 Object.values(data).reverse().forEach(r => {
-                    list.innerHTML += 
+                    list.innerHTML += `
                         <div class="record-card">
                             <small>${r.date}</small><br>
                             <b>Vagon: ${r.vagon}</b><br>
                             <span>Aniqladi: ${r.fio}</span><br>
                             <p>⚠️ ${r.issue}</p>
-                        </div>
-                    ;
+                        </div>`;
                 });
             }
         });
     }
 
-    function logout() { auth.signOut(); location.reload(); }
+    // Chiqish
+    function logout() {
+        localStorage.clear();
+        location.reload();
+    }
 </script>
 
 </body>
