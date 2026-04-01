@@ -64,12 +64,14 @@
 const firebaseConfig = {
   apiKey: "AIzaSyCqPqAB4xfRzM2WhB5VUHM_elKIx_j7Qk8",
   authDomain: "vagon-nazorat.firebaseapp.com",
+  databaseURL: "https://vagon-nazorat-default-rtdb.firebaseio.com", // BU QATORNI QO'SHTIM
   projectId: "vagon-nazorat",
   storageBucket: "vagon-nazorat.firebasestorage.app",
   messagingSenderId: "165935526785",
   appId: "1:165935526785:web:d81c40e438ac6f5a5aee80",
   measurementId: "G-CX751XWKVB"
 };
+
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
